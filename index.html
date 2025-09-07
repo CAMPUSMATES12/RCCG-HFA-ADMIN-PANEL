@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome - RCCG Parish</title>
+
+<!-- Favicon -->
+  <link rel="icon" type="image/png" href="https://vtpsruejncfykiazrfsx.supabase.co/storage/v1/object/public/PRODUCTS/Rccg.png" alt="RCCG Logo">
+
+<style>
+/* Reset */
+* { margin:0; padding:0; box-sizing:border-box; }
+body, html { height:100%; width:100%; font-family: 'Poppins', sans-serif; overflow:hidden; }
+
+/* Background with stars */
+body {
+  background: radial-gradient(circle at top, #0047ab, #001f54);
+  position: relative;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* Star effect */
+.stars {
+  width: 2px;
+  height: 2px;
+  background: white;
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: twinkle 3s infinite;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
+
+/* Welcome box */
+.welcome {
+  position: absolute;
+  top:50%; left:50%;
+  transform: translate(-50%,-50%);
+  text-align: center;
+  z-index: 2;
+  padding: 50px 40px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,255,255,0.05));
+  backdrop-filter: blur(15px);
+  box-shadow: 0 0 40px rgba(255,215,0,0.3);
+  animation: fadeIn 2s ease forwards;
+}
+@keyframes fadeIn {
+  0%{opacity:0; transform:translate(-50%,-45%);}
+  100%{opacity:1; transform:translate(-50%,-50%);}
+}
+
+.welcome img {
+  width:140px; height:140px; border-radius:50%;
+  margin-bottom:20px;
+  border:4px solid gold;
+  box-shadow: 0 0 25px rgba(255,215,0,0.8);
+}
+h1 { font-size: 2.2rem; margin-bottom:15px; color: gold; }
+p.tagline { font-size: 1.1rem; margin-bottom:20px; color:#d9eaff; }
+
+/* Verse */
+.verse {
+  font-style: italic;
+  font-size: 1rem;
+  margin-bottom:25px;
+  color:#fffacd;
+  padding: 12px;
+  border-left: 3px solid gold;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.3);
+}
+
+/* Button */
+#welcomeBtn {
+  padding:14px 32px;
+  border:none;
+  border-radius:50px;
+  background:gold;
+  color:#001f54;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  transition: all 0.3s;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+}
+#welcomeBtn:hover {
+  background:#ffe95e;
+  transform: translateY(-3px);
+}
+</style>
+</head>
+<body>
+
+<!-- Stars -->
+<div class="stars" style="top:10%; left:20%;"></div>
+<div class="stars" style="top:30%; left:70%;"></div>
+<div class="stars" style="top:60%; left:40%;"></div>
+<div class="stars" style="top:80%; left:80%;"></div>
+<div class="stars" style="top:50%; left:10%;"></div>
+
+<!-- Welcome -->
+<div class="welcome">
+  <img src="https://vtpsruejncfykiazrfsx.supabase.co/storage/v1/object/public/PRODUCTS/Rccg.png" alt="RCCG Logo">
+  <h1>✝️ RCCG HIGHLY FAVOURED ASSEMBLY</h1>
+  <p class="tagline">The Redeemed Christian Church of God</p>
+  <div class="verse">“Surely goodness and mercy shall follow me all the days of my life.” – Psalm 23:6</div>
+  <button id="welcomeBtn" onclick="enterSite()">Enter Site</button>
+</div>
+
+<script>
+// Redirect
+function enterSite(){
+  window.location.href="admin.html"; // change to your main site
+}
+</script>
+
+</body>
+</html>
