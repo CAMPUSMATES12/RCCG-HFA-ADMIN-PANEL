@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel - RCCG Content Management</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f7f9f7; margin:0; padding:20px; }
+  h1, h2 { color:#004080; text-align:center; }
+  .tab-buttons { text-align:center; margin:20px 0; }
+  .tab-buttons button { margin:0 5px; padding:10px 20px; border:none; border-radius:50px; background:linear-gradient(90deg,#0066cc,#3399ff); color:#fff; font-weight:600; cursor:pointer; transition:0.3s; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+  .tab-buttons button.active, .tab-buttons button:hover { background:linear-gradient(90deg,#3399ff,#0066cc); transform:translateY(-2px); box-shadow:0 6px 8px rgba(0,0,0,0.15); }
+  .tab-content { display:none; max-width:800px; margin:0 auto; }
+  .tab-content.active { display:block; }
+  form { background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom:30px; transition:0.3s; }
+  form:hover { box-shadow:0 6px 16px rgba(0,0,0,0.12); }
+  input, textarea, select { width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ccc; font-size:1rem; transition:0.2s; }
+  input:focus, textarea:focus, select:focus { border-color:#3399ff; outline:none; box-shadow:0 0 8px rgba(51,153,255,0.3); }
+  button.save-btn { background:linear-gradient(90deg,#0066cc,#3399ff); color:#fff; padding:12px 20px; border:none; border-radius:50px; cursor:pointer; font-weight:600; font-size:1rem; transition:0.3s; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+  button.save-btn:hover { background:linear-gradient(90deg,#3399ff,#0066cc); transform:translateY(-2px); box-shadow:0 6px 8px rgba(0,0,0,0.15); }
+  .item-list { margin-top:20px; }
+  .item { background:#fff; padding:20px; margin:10px 0; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.08); display:flex; justify-content:space-between; align-items:center; transition:0.3s; }
+  .item:hover { box-shadow:0 6px 16px rgba(0,0,0,0.12); }
+  .item-details { flex:1; }
+  .item-actions button { margin-left:10px; padding:8px 16px; border:none; border-radius:50px; font-weight:600; cursor:pointer; transition:0.3s; box-shadow:0 3px 6px rgba(0,0,0,0.1); }
+  .item-actions button.edit-btn { background:linear-gradient(90deg,#00cc66,#33cc99); color:#fff; }
+  .item-actions button.delete-btn { background:linear-gradient(90deg,#ff4d4d,#ff6666); color:#fff; }
+  .item-actions button:hover { transform:translateY(-2px); box-shadow:0 5px 8px rgba(0,0,0,0.15); }
+  .file-preview { margin:10px 0; max-height:200px; border-radius:8px; object-fit:cover; display:block; }
+  .drop-zone { padding:20px; border:2px dashed #3399ff; border-radius:12px; text-align:center; color:#666; margin:10px 0; cursor:pointer; transition:0.3s; }
+  .drop-zone.dragover { background:rgba(51,153,255,0.1); border-color:#0066cc; color:#004080; }
+  #status { font-weight:600; margin-top:20px; text-align:center; color:green; }
+</style>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<h1>Admin Panel - RCCG Content Management</h1>
+
+<div class="tab-buttons">
+  <button onclick="showTab('home')" class="active">Home</button>
+  <button onclick="showTab('services')">Services</button>
+  <button onclick="showTab('devotionals')">Devotionals</button>
+</div>
+
+<!-- HOME TAB -->
+<div id="home" class="tab-content active">
+  <h2>Manage Home Content</h2>
+  <form id="homeForm">
+    <input type="hidden" id="homeId" />
+    <input type="text" id="homeTitle" placeholder="Title" required>
+    <textarea id="homeContent" placeholder="Content" rows="5" required></textarea>
+    <input type="date" id="homeDate" required>
+    <div class="drop-zone" id="homeDropZone">Drag & drop an image or click to select</div>
+    <input type="file" id="homeFile" style="display:none;">
+    <img id="homePreview" class="file-preview" src="" alt="">
+    <button type="submit" class="save-btn">Save</button>
+  </form>
+  <div class="item-list" id="homeList">Loading...</div>
+</div>
+
+<!-- SERVICES TAB -->
+<div id="services" class="tab-content">
+  <h2>Manage Services</h2>
+  <form id="serviceForm">
+    <input type="hidden" id="serviceId">
+    <input type="text" id="serviceDay" placeholder="Day (e.g., Sunday)" required>
+    <input type="text" id="serviceName" placeholder="Service Name" required>
+    <input type="text" id="serviceTime" placeholder="Time (e.g., 9:00 AM)" required>
+    <button type="submit" class="save-btn">Save</button>
+  </form>
+  <div class="item-list" id="serviceList">Loading...</div>
+</div>
+
+<!-- DEVOTIONALS TAB -->
+<div id="devotionals" class="tab-content">
+  <h2>Manage Devotionals</h2>
+  <form id="devForm">
+    <input type="hidden" id="devId">
+    <input type="text" id="devTitle" placeholder="Title" required>
+    <input type="text" id="devScripture" placeholder="Scripture" required>
+    <textarea id="devContent" placeholder="Content" rows="6" required></textarea>
+    <input type="text" id="devType" placeholder="Type (adult or teen)" required>
+    <input type="date" id="devDate" required>
+    <div class="drop-zone" id="devDropZone">Drag & drop an image or click to select</div>
+    <input type="file" id="devFile" style="display:none;">
+    <img id="devPreview" class="file-preview" src="" alt="">
+    <button type="submit" class="save-btn">Save</button>
+  </form>
+  <div class="item-list" id="devList">Loading...</div>
+</div>
+
+<p id="status"></p>
+
+<script>
+const SUPABASE_URL = "https://vtpsruejncfykiazrfsx.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0cHNydWVqbmNmeWtpYXpyZnN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3NDA5NzQsImV4cCI6MjA3MjMxNjk3NH0.UV55gbsSAgnyolxJhIYTaJUpvoJFsJn0_-LMNwhwAK0"; // Replace with admin key
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function showTab(tabId){
+  document.querySelectorAll('.tab-content').forEach(tab=>tab.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  document.querySelectorAll('.tab-buttons button').forEach(btn=>btn.classList.remove('active'));
+  document.querySelector(`.tab-buttons button[onclick="showTab('${tabId}')"]`).classList.add('active');
+}
+
+async function uploadFile(file, folder){
+  if(!file) return null;
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${folder}/${Date.now()}.${fileExt}`;
+  const { data, error } = await supabase.storage.from('uploads').upload(fileName, file);
+  if(error){ alert('Upload error: '+error.message); return null; }
+  const { publicUrl } = supabase.storage.from('uploads').getPublicUrl(fileName);
+  return publicUrl;
+}
+
+function setupDropZone(dropZoneId, fileInputId, previewId){
+  const dropZone = document.getElementById(dropZoneId);
+  const fileInput = document.getElementById(fileInputId);
+  const preview = document.getElementById(previewId);
+
+  dropZone.addEventListener('click', ()=>fileInput.click());
+  dropZone.addEventListener('dragover', e=>{ e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', e=>{ e.preventDefault(); dropZone.classList.remove('dragover'); });
+  dropZone.addEventListener('drop', async e=>{
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    fileInput.files = e.dataTransfer.files;
+    preview.src = URL.createObjectURL(file);
+    preview.style.display='block';
+  });
+  fileInput.addEventListener('change', e=>{
+    const file = e.target.files[0];
+    if(file){ preview.src = URL.createObjectURL(file); preview.style.display='block'; }
+  });
+}
+
+setupDropZone('homeDropZone','homeFile','homePreview');
+setupDropZone('devDropZone','devFile','devPreview');
+
+// ----------------- CRUD FUNCTIONS -----------------
+async function loadHome(){ 
+  const { data, error } = await supabase.from("home_content").select("*").order("date",{ascending:false});
+  const list = document.getElementById("homeList"); if(error){ list.innerHTML="Error loading home content"; return; }
+  list.innerHTML=""; data.forEach(item=>{
+    const div = document.createElement("div"); div.className="item";
+    div.innerHTML=`<div class="item-details"><strong>${item.title}</strong> (${item.date})<br>${item.content}</div>
+    <div class="item-actions">
+      <button class="edit-btn" onclick="editHome(${item.id})">Edit</button>
+      <button class="delete-btn" onclick="deleteHome(${item.id})">Delete</button>
+    </div>`; list.appendChild(div);
+  });
+}
+
+async function editHome(id){
+  const { data } = await supabase.from("home_content").select("*").eq("id",id).single();
+  document.getElementById("homeId").value=data.id;
+  document.getElementById("homeTitle").value=data.title;
+  document.getElementById("homeContent").value=data.content;
+  document.getElementById("homeDate").value=data.date;
+  if(data.image_url){ document.getElementById("homePreview").src=data.image_url; document.getElementById("homePreview").style.display='block'; }
+}
+
+async function deleteHome(id){ if(!confirm("Delete this content?")) return;
+  await supabase.from("home_content").delete().eq("id",id); loadHome();
+}
+
+document.getElementById("homeForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const id=document.getElementById("homeId").value;
+  const title=document.getElementById("homeTitle").value;
+  const content=document.getElementById("homeContent").value;
+  const date=document.getElementById("homeDate").value;
+  const file=document.getElementById("homeFile").files[0];
+  let image_url=document.getElementById("homePreview").src;
+  if(file) image_url=await uploadFile(file,'home');
+  if(id){ await supabase.from("home_content").update({title,content,date,image_url}).eq("id",id); } 
+  else{ await supabase.from("home_content").insert({title,content,date,image_url}); }
+  e.target.reset(); document.getElementById("homePreview").style.display='none'; loadHome();
+});
+
+// ---------------- SERVICES ----------------
+async function loadServices(){
+  const { data } = await supabase.from("services").select("*").order("id",{ascending:true});
+  const list = document.getElementById("serviceList"); list.innerHTML="";
+  data.forEach(item=>{
+    const div=document.createElement("div"); div.className="item";
+    div.innerHTML=`<div class="item-details"><strong>${item.day} - ${item.name}</strong> (${item.time})</div>
+      <div class="item-actions">
+        <button class="edit-btn" onclick="editService(${item.id})">Edit</button>
+        <button class="delete-btn" onclick="deleteService(${item.id})">Delete</button>
+      </div>`; list.appendChild(div);
+  });
+}
+
+async function editService(id){
+  const { data } = await supabase.from("services").select("*").eq("id",id).single();
+  document.getElementById("serviceId").value=data.id;
+  document.getElementById("serviceDay").value=data.day;
+  document.getElementById("serviceName").value=data.name;
+  document.getElementById("serviceTime").value=data.time;
+}
+
+async function deleteService(id){ if(!confirm("Delete this service?")) return;
+  await supabase.from("services").delete().eq("id",id); loadServices();
+}
+
+document.getElementById("serviceForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const id=document.getElementById("serviceId").value;
+  const day=document.getElementById("serviceDay").value;
+  const name=document.getElementById("serviceName").value;
+  const time=document.getElementById("serviceTime").value;
+  if(id){ await supabase.from("services").update({day,name,time}).eq("id",id); }
+  else{ await supabase.from("services").insert({day,name,time}); }
+  e.target.reset(); loadServices();
+});
+
+// ---------------- DEVOTIONALS ----------------
+async function loadDevotionals(){
+  const { data } = await supabase.from("devotionals").select("*").order("date",{ascending:false});
+  const list = document.getElementById("devList"); list.innerHTML="";
+  data.forEach(item=>{
+    const div=document.createElement("div"); div.className="item";
+    div.innerHTML=`<div class="item-details"><strong>${item.title}</strong> (${item.type}, ${item.date})<br>${item.scripture}</div>
+    <div class="item-actions">
+      <button class="edit-btn" onclick="editDev(${item.id})">Edit</button>
+      <button class="delete-btn" onclick="deleteDev(${item.id})">Delete</button>
+    </div>`; list.appendChild(div);
+  });
+}
+
+async function editDev(id){
+  const { data } = await supabase.from("devotionals").select("*").eq("id",id).single();
+  document.getElementById("devId").value=data.id;
+  document.getElementById("devTitle").value=data.title;
+  document.getElementById("devScripture").value=data.scripture;
+  document.getElementById("devContent").value=data.content;
+  document.getElementById("devType").value=data.type;
+  document.getElementById("devDate").value=data.date;
+  if(data.image_url){ document.getElementById("devPreview").src=data.image_url; document.getElementById("devPreview").style.display='block'; }
+}
+
+async function deleteDev(id){ if(!confirm("Delete this devotional?")) return;
+  await supabase.from("devotionals").delete().eq("id",id); loadDevotionals();
+}
+
+document.getElementById("devForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const id=document.getElementById("devId").value;
+  const title=document.getElementById("devTitle").value;
+  const scripture=document.getElementById("devScripture").value;
+  const content=document.getElementById("devContent").value;
+  const type=document.getElementById("devType").value;
+  const date=document.getElementById("devDate").value;
+  const file=document.getElementById("devFile").files[0];
+  let image_url=document.getElementById("devPreview").src;
+  if(file) image_url=await uploadFile(file,'devotionals');
+  if(id){ await supabase.from("devotionals").update({title,scripture,content,type,date,image_url}).eq("id",id); }
+  else{ await supabase.from("devotionals").insert({title,scripture,content,type,date,image_url}); }
+  e.target.reset(); document.getElementById("devPreview").style.display='none'; loadDevotionals();
+});
+
+// ---------------- INITIAL LOAD ----------------
+loadHome(); loadServices(); loadDevotionals();
+</script>
+
+</body>
+</html>
