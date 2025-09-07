@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Welcome - RCCG Parish</title>
+<title>Admin Panel - RCCG HFA</title>
 
 <!-- Favicon -->
-  <link rel="icon" type="image/png" href="https://vtpsruejncfykiazrfsx.supabase.co/storage/v1/object/public/PRODUCTS/Rccg.png" alt="RCCG Logo">
+<link rel="icon" type="image/png" href="https://vtpsruejncfykiazrfsx.supabase.co/storage/v1/object/public/PRODUCTS/Rccg.png" alt="RCCG Logo">
 
 <style>
 /* Reset */
@@ -64,18 +64,6 @@ body {
 h1 { font-size: 2.2rem; margin-bottom:15px; color: gold; }
 p.tagline { font-size: 1.1rem; margin-bottom:20px; color:#d9eaff; }
 
-/* Verse */
-.verse {
-  font-style: italic;
-  font-size: 1rem;
-  margin-bottom:25px;
-  color:#fffacd;
-  padding: 12px;
-  border-left: 3px solid gold;
-  border-radius: 6px;
-  background: rgba(0,0,0,0.3);
-}
-
 /* Button */
 #welcomeBtn {
   padding:14px 32px;
@@ -107,16 +95,15 @@ p.tagline { font-size: 1.1rem; margin-bottom:20px; color:#d9eaff; }
 <!-- Welcome -->
 <div class="welcome">
   <img src="https://vtpsruejncfykiazrfsx.supabase.co/storage/v1/object/public/PRODUCTS/Rccg.png" alt="RCCG Logo">
-  <h1>✝️ RCCG HIGHLY FAVOURED ASSEMBLY</h1>
-  <p class="tagline">The Redeemed Christian Church of God</p>
-  <div class="verse">“Surely goodness and mercy shall follow me all the days of my life.” – Psalm 23:6</div>
-  <button id="welcomeBtn" onclick="enterSite()">Enter Site</button>
+  <h1>✝️ RCCG HFA Admin Panel</h1>
+  <p class="tagline">Manage Home, Services & Devotionals</p>
+  <button id="welcomeBtn" onclick="enterAdmin()">Go to Admin Panel</button>
 </div>
 
 <script>
-// Redirect
-function enterSite(){
-  window.location.href="admin.html"; // change to your main site
+// Redirect to admin panel
+function enterAdmin(){
+  window.location.href="admin.html"; // replace with your actual admin panel file
 }
 </script>
 
