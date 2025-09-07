@@ -94,7 +94,7 @@
 
 <script>
 const SUPABASE_URL = "https://vtpsruejncfykiazrfsx.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0cHNydWVqbmNmeWtpYXpyZnN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3NDA5NzQsImV4cCI6MjA3MjMxNjk3NH0.UV55gbsSAgnyolxJhIYTaJUpvoJFsJn0_-LMNwhwAK0"; // Replace with admin key
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0cHNydWVqbmNmeWtpYXpyZnN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3NDA5NzQsImV4cCI6MjA3MjMxNjk3NH0.UV55gbsSAgnyolxJhIYTaJUpvoJFsJn0_-LMNwhwAK0";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function showTab(tabId){
@@ -110,8 +110,9 @@ async function uploadFile(file, folder){
   const fileName = `${folder}/${Date.now()}.${fileExt}`;
   const { data, error } = await supabase.storage.from('uploads').upload(fileName, file);
   if(error){ alert('Upload error: '+error.message); return null; }
-  const { publicUrl } = supabase.storage.from('uploads').getPublicUrl(fileName);
-  return publicUrl;
+  const { data: urlData, error: urlError } = supabase.storage.from('uploads').getPublicUrl(fileName);
+  if(urlError){ alert('Error getting public URL: '+urlError.message); return null; }
+  return urlData.publicUrl;
 }
 
 function setupDropZone(dropZoneId, fileInputId, previewId){
