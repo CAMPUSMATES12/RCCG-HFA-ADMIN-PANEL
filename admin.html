@@ -41,6 +41,7 @@
   <button onclick="showTab('home')" class="active">Home</button>
   <button onclick="showTab('services')">Services</button>
   <button onclick="showTab('devotionals')">Devotionals</button>
+  <button onclick="showTab('sunday_school')">Sunday School</button>
 </div>
 
 <!-- HOME TAB -->
@@ -90,6 +91,24 @@
   <div class="item-list" id="devList">Loading...</div>
 </div>
 
+<!-- SUNDAY SCHOOL TAB -->
+<div id="sunday_school" class="tab-content">
+  <h2>Manage Sunday School Lessons</h2>
+  <form id="ssForm">
+    <input type="hidden" id="ssId">
+    <input type="text" id="ssTitle" placeholder="Title" required>
+    <input type="text" id="ssScripture" placeholder="Scripture" required>
+    <textarea id="ssContent" placeholder="Content" rows="6" required></textarea>
+    <input type="text" id="ssType" placeholder="Type (main or yaya)" required>
+    <input type="date" id="ssDate" required>
+    <div class="drop-zone" id="ssDropZone">Drag & drop an image or click to select</div>
+    <input type="file" id="ssFile" style="display:none;">
+    <img id="ssPreview" class="file-preview" src="" alt="">
+    <button type="submit" class="save-btn">Save</button>
+  </form>
+  <div class="item-list" id="ssList">Loading...</div>
+</div>
+
 <p id="status"></p>
 
 <script>
@@ -109,9 +128,12 @@ async function uploadFile(file, folder){
   const fileExt = file.name.split('.').pop();
   const fileName = `${folder}/${Date.now()}.${fileExt}`;
   const { data, error } = await supabase.storage.from('uploads').upload(fileName, file);
-  if(error){ alert('Upload error: '+error.message); return null; }
-  const { data: urlData, error: urlError } = supabase.storage.from('uploads').getPublicUrl(fileName);
-  if(urlError){ alert('Error getting public URL: '+urlError.message); return null; }
+  if(error){ 
+    alert('Upload error: '+error.message); 
+    console.error("Upload error:", error);
+    return null; 
+  }
+  const { data: urlData } = supabase.storage.from('uploads').getPublicUrl(fileName);
   return urlData.publicUrl;
 }
 
@@ -119,11 +141,10 @@ function setupDropZone(dropZoneId, fileInputId, previewId){
   const dropZone = document.getElementById(dropZoneId);
   const fileInput = document.getElementById(fileInputId);
   const preview = document.getElementById(previewId);
-
   dropZone.addEventListener('click', ()=>fileInput.click());
   dropZone.addEventListener('dragover', e=>{ e.preventDefault(); dropZone.classList.add('dragover'); });
   dropZone.addEventListener('dragleave', e=>{ e.preventDefault(); dropZone.classList.remove('dragover'); });
-  dropZone.addEventListener('drop', async e=>{
+  dropZone.addEventListener('drop', e=>{
     e.preventDefault();
     dropZone.classList.remove('dragover');
     const file = e.dataTransfer.files[0];
@@ -139,23 +160,26 @@ function setupDropZone(dropZoneId, fileInputId, previewId){
 
 setupDropZone('homeDropZone','homeFile','homePreview');
 setupDropZone('devDropZone','devFile','devPreview');
+setupDropZone('ssDropZone','ssFile','ssPreview');
 
-// ----------------- CRUD FUNCTIONS -----------------
+// ---------------- HOME ----------------
 async function loadHome(){ 
   const { data, error } = await supabase.from("home_content").select("*").order("date",{ascending:false});
-  const list = document.getElementById("homeList"); if(error){ list.innerHTML="Error loading home content"; return; }
-  list.innerHTML=""; data.forEach(item=>{
+  if(error){ console.error("Load home error:", error.message); return; }
+  const list = document.getElementById("homeList");
+  list.innerHTML=""; 
+  data.forEach(item=>{
     const div = document.createElement("div"); div.className="item";
     div.innerHTML=`<div class="item-details"><strong>${item.title}</strong> (${item.date})<br>${item.content}</div>
-    <div class="item-actions">
-      <button class="edit-btn" onclick="editHome(${item.id})">Edit</button>
-      <button class="delete-btn" onclick="deleteHome(${item.id})">Delete</button>
-    </div>`; list.appendChild(div);
+    <div class="item-actions"><button class="edit-btn" onclick="editHome(${item.id})">Edit</button>
+    <button class="delete-btn" onclick="deleteHome(${item.id})">Delete</button></div>`;
+    list.appendChild(div);
   });
 }
 
 async function editHome(id){
-  const { data } = await supabase.from("home_content").select("*").eq("id",id).single();
+  const { data, error } = await supabase.from("home_content").select("*").eq("id",id).single();
+  if(error){ console.error("Edit home error:", error.message); return; }
   document.getElementById("homeId").value=data.id;
   document.getElementById("homeTitle").value=data.title;
   document.getElementById("homeContent").value=data.content;
@@ -163,8 +187,11 @@ async function editHome(id){
   if(data.image_url){ document.getElementById("homePreview").src=data.image_url; document.getElementById("homePreview").style.display='block'; }
 }
 
-async function deleteHome(id){ if(!confirm("Delete this content?")) return;
-  await supabase.from("home_content").delete().eq("id",id); loadHome();
+async function deleteHome(id){ 
+  if(!confirm("Delete this content?")) return;
+  const { error } = await supabase.from("home_content").delete().eq("id",id); 
+  if(error){ console.error("Delete home error:", error.message); alert(error.message); return; }
+  loadHome();
 }
 
 document.getElementById("homeForm").addEventListener("submit", async e=>{
@@ -176,35 +203,42 @@ document.getElementById("homeForm").addEventListener("submit", async e=>{
   const file=document.getElementById("homeFile").files[0];
   let image_url=document.getElementById("homePreview").src;
   if(file) image_url=await uploadFile(file,'home');
-  if(id){ await supabase.from("home_content").update({title,content,date,image_url}).eq("id",id); } 
-  else{ await supabase.from("home_content").insert({title,content,date,image_url}); }
+
+  let res;
+  if(id){ res = await supabase.from("home_content").update({title,content,date,image_url}).eq("id",id); } 
+  else{ res = await supabase.from("home_content").insert({title,content,date,image_url}); }
+  if(res.error){ console.error("Save home error:", res.error.message); alert(res.error.message); return; }
   e.target.reset(); document.getElementById("homePreview").style.display='none'; loadHome();
 });
 
 // ---------------- SERVICES ----------------
 async function loadServices(){
-  const { data } = await supabase.from("services").select("*").order("id",{ascending:true});
+  const { data, error } = await supabase.from("services").select("*").order("id",{ascending:true});
+  if(error){ console.error("Load services error:", error.message); return; }
   const list = document.getElementById("serviceList"); list.innerHTML="";
   data.forEach(item=>{
     const div=document.createElement("div"); div.className="item";
     div.innerHTML=`<div class="item-details"><strong>${item.day} - ${item.name}</strong> (${item.time})</div>
-      <div class="item-actions">
-        <button class="edit-btn" onclick="editService(${item.id})">Edit</button>
-        <button class="delete-btn" onclick="deleteService(${item.id})">Delete</button>
-      </div>`; list.appendChild(div);
+    <div class="item-actions"><button class="edit-btn" onclick="editService(${item.id})">Edit</button>
+    <button class="delete-btn" onclick="deleteService(${item.id})">Delete</button></div>`;
+    list.appendChild(div);
   });
 }
 
 async function editService(id){
-  const { data } = await supabase.from("services").select("*").eq("id",id).single();
+  const { data, error } = await supabase.from("services").select("*").eq("id",id).single();
+  if(error){ console.error("Edit service error:", error.message); return; }
   document.getElementById("serviceId").value=data.id;
   document.getElementById("serviceDay").value=data.day;
   document.getElementById("serviceName").value=data.name;
   document.getElementById("serviceTime").value=data.time;
 }
 
-async function deleteService(id){ if(!confirm("Delete this service?")) return;
-  await supabase.from("services").delete().eq("id",id); loadServices();
+async function deleteService(id){ 
+  if(!confirm("Delete this service?")) return;
+  const { error } = await supabase.from("services").delete().eq("id",id); 
+  if(error){ console.error("Delete service error:", error.message); alert(error.message); return; }
+  loadServices();
 }
 
 document.getElementById("serviceForm").addEventListener("submit", async e=>{
@@ -213,27 +247,30 @@ document.getElementById("serviceForm").addEventListener("submit", async e=>{
   const day=document.getElementById("serviceDay").value;
   const name=document.getElementById("serviceName").value;
   const time=document.getElementById("serviceTime").value;
-  if(id){ await supabase.from("services").update({day,name,time}).eq("id",id); }
-  else{ await supabase.from("services").insert({day,name,time}); }
+  let res;
+  if(id){ res = await supabase.from("services").update({day,name,time}).eq("id",id); }
+  else{ res = await supabase.from("services").insert({day,name,time}); }
+  if(res.error){ console.error("Save service error:", res.error.message); alert(res.error.message); return; }
   e.target.reset(); loadServices();
 });
 
 // ---------------- DEVOTIONALS ----------------
 async function loadDevotionals(){
-  const { data } = await supabase.from("devotionals").select("*").order("date",{ascending:false});
+  const { data, error } = await supabase.from("devotionals").select("*").order("date",{ascending:false});
+  if(error){ console.error("Load devotionals error:", error.message); return; }
   const list = document.getElementById("devList"); list.innerHTML="";
   data.forEach(item=>{
     const div=document.createElement("div"); div.className="item";
     div.innerHTML=`<div class="item-details"><strong>${item.title}</strong> (${item.type}, ${item.date})<br>${item.scripture}</div>
-    <div class="item-actions">
-      <button class="edit-btn" onclick="editDev(${item.id})">Edit</button>
-      <button class="delete-btn" onclick="deleteDev(${item.id})">Delete</button>
-    </div>`; list.appendChild(div);
+    <div class="item-actions"><button class="edit-btn" onclick="editDev(${item.id})">Edit</button>
+    <button class="delete-btn" onclick="deleteDev(${item.id})">Delete</button></div>`;
+    list.appendChild(div);
   });
 }
 
 async function editDev(id){
-  const { data } = await supabase.from("devotionals").select("*").eq("id",id).single();
+  const { data, error } = await supabase.from("devotionals").select("*").eq("id",id).single();
+  if(error){ console.error("Edit devotional error:", error.message); return; }
   document.getElementById("devId").value=data.id;
   document.getElementById("devTitle").value=data.title;
   document.getElementById("devScripture").value=data.scripture;
@@ -243,8 +280,11 @@ async function editDev(id){
   if(data.image_url){ document.getElementById("devPreview").src=data.image_url; document.getElementById("devPreview").style.display='block'; }
 }
 
-async function deleteDev(id){ if(!confirm("Delete this devotional?")) return;
-  await supabase.from("devotionals").delete().eq("id",id); loadDevotionals();
+async function deleteDev(id){ 
+  if(!confirm("Delete this devotional?")) return;
+  const { error } = await supabase.from("devotionals").delete().eq("id",id); 
+  if(error){ console.error("Delete devotional error:", error.message); alert(error.message); return; }
+  loadDevotionals();
 }
 
 document.getElementById("devForm").addEventListener("submit", async e=>{
@@ -258,13 +298,69 @@ document.getElementById("devForm").addEventListener("submit", async e=>{
   const file=document.getElementById("devFile").files[0];
   let image_url=document.getElementById("devPreview").src;
   if(file) image_url=await uploadFile(file,'devotionals');
-  if(id){ await supabase.from("devotionals").update({title,scripture,content,type,date,image_url}).eq("id",id); }
-  else{ await supabase.from("devotionals").insert({title,scripture,content,type,date,image_url}); }
+  let res;
+  if(id){ res = await supabase.from("devotionals").update({title,scripture,content,type,date,image_url}).eq("id",id); }
+  else{ res = await supabase.from("devotionals").insert({title,scripture,content,type,date,image_url}); }
+  if(res.error){ console.error("Save devotional error:", res.error.message); alert(res.error.message); return; }
   e.target.reset(); document.getElementById("devPreview").style.display='none'; loadDevotionals();
 });
 
+// ---------------- SUNDAY SCHOOL ----------------
+async function loadSundaySchool(){
+  const { data, error } = await supabase.from("sunday_school_lessons").select("*").order("date",{ascending:false});
+  if(error){ console.error("Load Sunday School error:", error.message); return; }
+  const list = document.getElementById("ssList"); list.innerHTML="";
+  data.forEach(item=>{
+    const div=document.createElement("div"); div.className="item";
+    div.innerHTML=`<div class="item-details"><strong>${item.title}</strong> (${item.type}, ${item.date})<br>${item.scripture}</div>
+    <div class="item-actions"><button class="edit-btn" onclick="editSS(${item.id})">Edit</button>
+    <button class="delete-btn" onclick="deleteSS(${item.id})">Delete</button></div>`;
+    list.appendChild(div);
+  });
+}
+
+async function editSS(id){
+  const { data, error } = await supabase.from("sunday_school_lessons").select("*").eq("id",id).single();
+  if(error){ console.error("Edit Sunday School error:", error.message); return; }
+  document.getElementById("ssId").value=data.id;
+  document.getElementById("ssTitle").value=data.title;
+  document.getElementById("ssScripture").value=data.scripture;
+  document.getElementById("ssContent").value=data.content;
+  document.getElementById("ssType").value=data.type;
+  document.getElementById("ssDate").value=data.date;
+  if(data.image_url){ document.getElementById("ssPreview").src=data.image_url; document.getElementById("ssPreview").style.display='block'; }
+}
+
+async function deleteSS(id){ 
+  if(!confirm("Delete this lesson?")) return;
+  const { error } = await supabase.from("sunday_school_lessons").delete().eq("id",id); 
+  if(error){ console.error("Delete Sunday School error:", error.message); alert(error.message); return; }
+  loadSundaySchool();
+}
+
+document.getElementById("ssForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const id=document.getElementById("ssId").value;
+  const title=document.getElementById("ssTitle").value;
+  const scripture=document.getElementById("ssScripture").value;
+  const content=document.getElementById("ssContent").value;
+  const type=document.getElementById("ssType").value;
+  const date=document.getElementById("ssDate").value;
+  const file=document.getElementById("ssFile").files[0];
+  let image_url=document.getElementById("ssPreview").src;
+  if(file) image_url=await uploadFile(file,'sunday_school');
+  let res;
+  if(id){ res = await supabase.from("sunday_school_lessons").update({title,scripture,content,type,date,image_url}).eq("id",id); }
+  else{ res = await supabase.from("sunday_school_lessons").insert({title,scripture,content,type,date,image_url}); }
+  if(res.error){ console.error("Save Sunday School error:", res.error.message); alert(res.error.message); return; }
+  e.target.reset(); document.getElementById("ssPreview").style.display='none'; loadSundaySchool();
+});
+
 // ---------------- INITIAL LOAD ----------------
-loadHome(); loadServices(); loadDevotionals();
+loadHome(); 
+loadServices(); 
+loadDevotionals(); 
+loadSundaySchool();
 </script>
 
 </body>
